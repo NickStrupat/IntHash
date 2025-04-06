@@ -8,9 +8,10 @@ public class InverseTests(ITestOutputHelper toh)
 	public void HashInverse_WhenCalledWithTheResultOfCallingHash_ReturnsTheOriginalValue()
 	{
 		const UInt32 tenPercent = UInt32.MaxValue / 10;
+		var cancellationToken = TestContext.Current.CancellationToken;
 		for (var i = 0ul; i <= UInt32.MaxValue; i++)
 		{
-			TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
+			cancellationToken.ThrowIfCancellationRequested();
 			
 			var (quotient, remainder) = Math.DivRem(i, tenPercent);
 			if (remainder == 0)

@@ -10,9 +10,10 @@ public class PerfectDistributionTests(ITestOutputHelper toh)
 		var _32BitValueCount = UInt32.MaxValue + 1ul;
 		var bitStore = new Byte[_32BitValueCount / 8];
 		const UInt32 tenPercent = UInt32.MaxValue / 10;
+		var cancellationToken = TestContext.Current.CancellationToken;
 		for (var i = 0ul; i <= UInt32.MaxValue; i++)
 		{
-			TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
+			cancellationToken.ThrowIfCancellationRequested();
 			
 			var (quotient, remainder) = Math.DivRem(i, tenPercent);
 			if (remainder == 0)
