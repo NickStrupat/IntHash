@@ -1,19 +1,12 @@
-﻿
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using NickStrupat;
+﻿using NickStrupat;
 using Xunit.Abstractions;
-using Xunit.Sdk;
+
+[assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
 
 namespace UnitTests;
 
 public class IdHashTests(ITestOutputHelper toh)
 {
-	// private Action<String> print = toh
-	// 	.GetType()
-	// 	.GetMethod("QueueTestOutput", BindingFlags.NonPublic | BindingFlags.Instance)
-	// 	?.CreateDelegate<Action<String>>()!;
-	
 	[Fact]
 	public void Hash_WhenCalledWithZero_DoesNotReturnZero()
 	{
@@ -31,12 +24,12 @@ public class IdHashTests(ITestOutputHelper toh)
 	[Fact]
 	public void HashInverse_WhenCalledWithTheResultOfCallingHash_ReturnsTheOriginalValue()
 	{
-		const UInt32 percent = UInt32.MaxValue / 100;
+		const UInt32 tenPercent = UInt32.MaxValue / 10;
 		for (var i = 0ul; i <= UInt32.MaxValue; i++)
 		{
-			var (quotient, remainder) = Math.DivRem(i, percent);
+			var (quotient, remainder) = Math.DivRem(i, tenPercent);
 			if (remainder == 0)
-				toh.WriteLine(quotient + "%");
+				toh.WriteLine($"{quotient * 10}% - {i:N0}");
 			
 			var input = (UInt32)i;
 			var hash = IdHash.Hash(input);
@@ -58,7 +51,7 @@ public class IdHashTests(ITestOutputHelper toh)
 		{
 			var (quotient, remainder) = Math.DivRem(i, tenPercent);
 			if (remainder == 0)
-				toh.WriteLine(quotient + "%");
+				toh.WriteLine($"{quotient * 10}% - {i:N0}");
 			
 			var input = (UInt32)i;
 			var hash = IdHash.Hash(input);
@@ -79,23 +72,4 @@ public class IdHashTests(ITestOutputHelper toh)
 		
 		Assert.True(bitStore.All(x => x == 0xff), "Collision found");
 	}
-}
-
-static class ITestOutputHelperExtensions
-{
-	public static void Write(this ITestOutputHelper toh, String message)
-	{
-		ArgumentNullException.ThrowIfNull(toh);
-		if (toh is not TestOutputHelper x)
-			throw new ArgumentException("This `ITestOutputHelper` is not an instance of the `TestOutputHelper` class.");
-		ArgumentNullException.ThrowIfNull(message);
-		var print = printDelegate.GetValue(toh, t => queueTestOutput.CreateDelegate<Action<String>>(t));
-		print(message);
-	}
-	
-	private static readonly ConditionalWeakTable<ITestOutputHelper, Action<String>> printDelegate = new();
-
-	private static readonly MethodInfo queueTestOutput = typeof(TestOutputHelper)
-		.GetMethod("QueueTestOutput", BindingFlags.NonPublic | BindingFlags.Instance)
-		?? throw new InvalidOperationException("Could not find the QueueTestOutput method.");
 }
