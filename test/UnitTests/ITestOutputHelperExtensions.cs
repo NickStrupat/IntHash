@@ -1,7 +1,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Xunit.Abstractions;
-using Xunit.Sdk;
+using Xunit.v3;
 
 namespace UnitTests;
 
