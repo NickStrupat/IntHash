@@ -15,7 +15,7 @@ public static class IdHash
 	{
 		unchecked
 		{
-			x += 2;
+			x += 2; // change from original implementation: increment by 2 instead of 1 because 1 produced a result that was equal to the input (input: 1,279,745,357)
 			x ^= x >> 17;
 			x *= 0xed5ad4bb;
 			x ^= x >> 11;
