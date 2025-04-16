@@ -1,5 +1,5 @@
 # IdHash
-Pair of integer hash functions that are inverses of each other. No collisions on 32-bit inputs.
+Pair of integer hash functions that are inverses of each other. No collisions on 32-bit inputs. Low bias (~0.0208). No hashes are equal to their inputs.
 
 ```csharp
 var x = Random.Shared.Next(0, uint.MaxValue);

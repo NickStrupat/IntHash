@@ -2,7 +2,7 @@
 
 namespace UnitTests;
 
-public class PerfectDistributionTests(ITestOutputHelper toh)
+public class PerfectDistributionTests(ITestOutputHelper toh, ITestContextAccessor ctx)
 {
 	[Fact]
 	public void Hash_WhenCalledWithAllPossibleValues_ReturnsUniqueValues()
@@ -10,10 +10,9 @@ public class PerfectDistributionTests(ITestOutputHelper toh)
 		var _32BitValueCount = UInt32.MaxValue + 1ul;
 		var bitStore = new Byte[_32BitValueCount / 8];
 		const UInt32 tenPercent = UInt32.MaxValue / 10;
-		var cancellationToken = TestContext.Current.CancellationToken;
 		for (var i = 0ul; i <= UInt32.MaxValue; i++)
 		{
-			cancellationToken.ThrowIfCancellationRequested();
+			TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
 			
 			var (quotient, remainder) = Math.DivRem(i, tenPercent);
 			if (remainder == 0)

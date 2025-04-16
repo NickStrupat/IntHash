@@ -12,11 +12,11 @@ static class ITestOutputHelperExtensions
 		if (toh is not TestOutputHelper x)
 			throw new ArgumentException("This `ITestOutputHelper` is not an instance of the `TestOutputHelper` class.");
 		ArgumentNullException.ThrowIfNull(message);
-		var print = printDelegate.GetValue(toh, t => queueTestOutput.CreateDelegate<Action<String>>(t));
+		var print = printDelegates.GetValue(x, t => queueTestOutput.CreateDelegate<Action<String>>(t));
 		print(message);
 	}
 	
-	private static readonly ConditionalWeakTable<ITestOutputHelper, Action<String>> printDelegate = new();
+	private static readonly ConditionalWeakTable<TestOutputHelper, Action<String>> printDelegates = new();
 
 	private static readonly MethodInfo queueTestOutput = typeof(TestOutputHelper)
 		.GetMethod("QueueTestOutput", BindingFlags.NonPublic | BindingFlags.Instance)
