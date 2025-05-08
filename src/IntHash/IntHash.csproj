@@ -6,12 +6,16 @@
         <RootNamespace>NickStrupat</RootNamespace>
         <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
         <Nullable>enable</Nullable>
-        <Version>1.0.0</Version>
+        <Version>0.0.1</Version>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <PackageTags>integer-hash;perfect-hash;id-obfuscation;hash;hash-function</PackageTags>
+        <Authors>Nick Strupat</Authors>
     </PropertyGroup>
 
     <ItemGroup>
         <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+        <None Include="..\..\LICENSE" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
 </Project>

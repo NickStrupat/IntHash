@@ -19,7 +19,7 @@ public class PerfectDistributionTests(ITestOutputHelper toh, ITestContextAccesso
 				toh.WriteLine($"{quotient * 10}% - {i:N0}");
 			
 			var input = (UInt32)i;
-			var hash = IdHash.Hash(input);
+			var hash = IntHash.Hash(input);
 			var byteIndex = (Int32)(hash / 8);
 			var bitIndex = (Byte)(hash & 7);
 			ref var @byte = ref bitStore[byteIndex];

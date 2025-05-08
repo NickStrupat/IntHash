@@ -17,10 +17,10 @@ public class InverseTests(ITestOutputHelper toh)
 				toh.WriteLine($"{quotient * 10}% - {i:N0}");
 			
 			var input = (UInt32)i;
-			var hash = IdHash.Hash(input);
+			var hash = IntHash.Hash(input);
 			if (input == hash) // Assert class methods are too slow
 				Assert.Fail("Input and hash result are equal: " + input + " => " + hash);
-			var inverse = IdHash.HashInverse(hash);
+			var inverse = IntHash.HashInverse(hash);
 			if (input != inverse) // Assert class methods are too slow
 				Assert.Fail("Input and inverse result are not equal: " + input + " => " + hash + " => " + inverse);
 		}

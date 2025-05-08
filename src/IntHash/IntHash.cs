@@ -6,7 +6,7 @@ namespace NickStrupat;
 /// A pair of integer hash functions that are each other's inverse. Low bias (~0.0208). For all 32-bit values, no collisions and no hash is equal to its input.
 /// </summary>
 /// <note>Ported from https://github.com/skeeto/hash-prospector/blob/396dbe235c94dfc2e9b559fc965bcfda8b6a122c/README.md?plain=1#L237</note>
-public static class IdHash
+public static class IntHash
 {
 	/// <summary>The inverse of <see cref="HashInverse(UInt32)"/>.</summary>
 	/// <param name="x">The integer to hash</param>
