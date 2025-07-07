@@ -49,4 +49,25 @@ public static class IntHash
 	/// <param name="x">The integer to hash</param>
 	/// <returns>The hashed integer</returns>
 	public static Int32 HashInverse(Int32 x) => (Int32)Hash((UInt32)x);
+	
+	public static UInt64 Hash(UInt64 x)
+	{
+		var lo = (UInt32)x;
+		var hi = (UInt32)(x >> 32);
+		var loHashed = Hash(lo);
+		var hiHashed = Hash(hi + loHashed);
+		return ((UInt64)hiHashed << 32) | loHashed;
+	}
+	
+	public static UInt64 HashInverse(UInt64 x)
+	{
+		var lo = (UInt32)x;
+		var hi = (UInt32)(x >> 32);
+		var hiInverse = HashInverse(hi) - lo;
+		var loInverse = HashInverse(lo);
+		return ((UInt64)hiInverse << 32) | loInverse;
+	}
+	
+	public static Int64 Hash(Int64 x) => (Int64)Hash((UInt64)x);
+	public static Int64 HashInverse(Int64 x) => (Int64)HashInverse((UInt64)x);
 }
