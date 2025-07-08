@@ -50,22 +50,25 @@ public static class IntHash
 	/// <returns>The hashed integer</returns>
 	public static Int32 HashInverse(Int32 x) => (Int32)Hash((UInt32)x);
 	
+	/// <summary>The inverse of <see cref="HashInverse(UInt64)"/>.</summary>
+	/// <param name="x">The integer to hash</param>
+	/// <returns>The hashed integer</returns>
 	public static UInt64 Hash(UInt64 x)
 	{
-		var lo = (UInt32)x;
-		var hi = (UInt32)(x >> 32);
-		var loHashed = Hash(lo);
-		var hiHashed = Hash(hi + loHashed);
-		return ((UInt64)hiHashed << 32) | loHashed;
+		var (lo, hi) = ((UInt32)x, (UInt32)(x >> 32)); // split the 64-bit integer into two 32-bit integers
+		var loHash = Hash(lo); // hash the low part
+		var hiXorHash = Hash(hi + loHash); // xor the high part with the low hashed part so low bits affect the high bits
+		var loHashXor = loHash + hiXorHash; // xor the low hashed part with the high xor hashed part so high bits affect the low bits
+		return ((UInt64)hiXorHash << 32) | loHashXor;
 	}
 	
 	public static UInt64 HashInverse(UInt64 x)
 	{
-		var lo = (UInt32)x;
-		var hi = (UInt32)(x >> 32);
-		var hiInverse = HashInverse(hi) - lo;
-		var loInverse = HashInverse(lo);
-		return ((UInt64)hiInverse << 32) | loInverse;
+		var (loHashXor, hiXorHash) = ((UInt32)x, (UInt32)(x >> 32));
+		var loHash = loHashXor - hiXorHash;
+		var hi = HashInverse(hiXorHash) - loHash;
+		var lo = HashInverse(loHash);
+		return ((UInt64)hi << 32) | lo;
 	}
 	
 	public static Int64 Hash(Int64 x) => (Int64)Hash((UInt64)x);
