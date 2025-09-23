@@ -6,11 +6,14 @@
         <RootNamespace>NickStrupat</RootNamespace>
         <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
         <Nullable>enable</Nullable>
-        <Version>0.0.1</Version>
+        <WarningsAsErrors>nullable</WarningsAsErrors>
+        <Version>0.0.2</Version>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <PackageTags>integer-hash;perfect-hash;id-obfuscation;hash;hash-function</PackageTags>
+        <PackageProjectUrl>https://github.com/NickStrupat/IntHash</PackageProjectUrl>
         <Authors>Nick Strupat</Authors>
+        <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">true</GeneratePackageOnBuild>
     </PropertyGroup>
 
     <ItemGroup>

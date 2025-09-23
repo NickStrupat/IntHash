@@ -57,16 +57,16 @@ public static class IntHash
 	{
 		var (lo, hi) = ((UInt32)x, (UInt32)(x >> 32)); // split the 64-bit integer into two 32-bit integers
 		var loHash = Hash(lo); // hash the low part
-		var hiXorHash = Hash(hi + loHash); // xor the high part with the low hashed part so low bits affect the high bits
-		var loHashXor = loHash + hiXorHash; // xor the low hashed part with the high xor hashed part so high bits affect the low bits
+		var hiXorHash = Hash(hi ^ loHash); // hash the high part XORed with the low hashed part so low bits affect the high bits
+		var loHashXor = loHash ^ hiXorHash; // XOR the low hashed part with the high xor hashed part so high bits affect the low bits
 		return ((UInt64)hiXorHash << 32) | loHashXor;
 	}
 	
 	public static UInt64 HashInverse(UInt64 x)
 	{
 		var (loHashXor, hiXorHash) = ((UInt32)x, (UInt32)(x >> 32));
-		var loHash = loHashXor - hiXorHash;
-		var hi = HashInverse(hiXorHash) - loHash;
+		var loHash = loHashXor ^ hiXorHash;
+		var hi = HashInverse(hiXorHash) ^ loHash;
 		var lo = HashInverse(loHash);
 		return ((UInt64)hi << 32) | lo;
 	}
