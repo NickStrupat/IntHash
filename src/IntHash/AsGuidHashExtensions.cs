@@ -1,5 +1,5 @@
 using System;
-using System.Runtime.InteropServices;
+using System.Buffers.Binary;
 
 namespace NickStrupat;
 
@@ -30,14 +30,12 @@ public static class AsGuidHashExtensions
 		var check1 = IntHash.Hash(x + IntHash.Hash(payload));
 		var check2 = IntHash.Hash(x + IntHash.Hash(check1));
 		var check3 = IntHash.Hash(x + IntHash.Hash(check2));
-		Span<UInt32> uint32s = stackalloc UInt32[]
-		{
+		return ToGuidHash(
 			check3,
 			check2, // overlaps the version nibble
 			check1, // overlaps the variant bits
 			payload
-		};
-		return ToGuidHash(MemoryMarshal.AsBytes(uint32s));
+		);
 	}
 
 	/// <summary>Encodes <paramref name="x"/> as a version 8 GUID.</summary>
@@ -47,14 +45,12 @@ public static class AsGuidHashExtensions
 	{
 		var payload = IntHash.Hash(x);
 		var check = IntHash.Hash(x + IntHash.Hash(payload)); // see AsGuidHash(UInt32)
-		Span<UInt32> uint32s = stackalloc UInt32[]
-		{
+		return ToGuidHash(
 			(UInt32)payload,
 			(UInt32)check,          // overlaps the version nibble
 			(UInt32)(check >> 32),  // overlaps the variant bits
 			(UInt32)(payload >> 32)
-		};
-		return ToGuidHash(MemoryMarshal.AsBytes(uint32s));
+		);
 	}
 
 	/// <inheritdoc cref="AsGuidHash(UInt32)"/>
@@ -71,10 +67,10 @@ public static class AsGuidHashExtensions
 	{
 		if (guid.Version() == guidVersion)
 		{
-			Span<UInt32> uint32s = stackalloc UInt32[4];
-			if (guid.TryWriteBytes(MemoryMarshal.AsBytes(uint32s)))
+			Span<Byte> bytes = stackalloc Byte[16];
+			if (guid.TryWriteBytes(bytes))
 			{
-				var candidate = IntHash.HashInverse(uint32s[3]);
+				var candidate = IntHash.HashInverse(ReadWord(bytes, 3));
 				if (candidate.AsGuidHash() == guid)
 				{
 					hash = candidate;
@@ -109,10 +105,10 @@ public static class AsGuidHashExtensions
 	{
 		if (guid.Version() == guidVersion)
 		{
-			Span<UInt32> uint32s = stackalloc UInt32[4];
-			if (guid.TryWriteBytes(MemoryMarshal.AsBytes(uint32s)))
+			Span<Byte> bytes = stackalloc Byte[16];
+			if (guid.TryWriteBytes(bytes))
 			{
-				var payload = ((UInt64)uint32s[3] << 32) | uint32s[0];
+				var payload = ((UInt64)ReadWord(bytes, 3) << 32) | ReadWord(bytes, 0);
 				var candidate = IntHash.HashInverse(payload);
 				if (candidate.AsGuidHash() == guid)
 				{
@@ -157,10 +153,22 @@ public static class AsGuidHashExtensions
 		return (Byte)(bytes[guidVersionByteIndex] >> 4);
 	}
 
-	private static Guid ToGuidHash(Span<Byte> bytes)
+	private const Int32 wordSize = sizeof(UInt32);
+
+	// Words are little-endian on every platform, matching the little-endian fields of Guid.TryWriteBytes, so a value
+	// encodes to the same GUID on big-endian and little-endian machines
+	private static Guid ToGuidHash(UInt32 word0, UInt32 word1, UInt32 word2, UInt32 word3)
 	{
+		Span<Byte> bytes = stackalloc Byte[16];
+		BinaryPrimitives.WriteUInt32LittleEndian(bytes, word0);
+		BinaryPrimitives.WriteUInt32LittleEndian(bytes[wordSize..], word1);
+		BinaryPrimitives.WriteUInt32LittleEndian(bytes[(2 * wordSize)..], word2);
+		BinaryPrimitives.WriteUInt32LittleEndian(bytes[(3 * wordSize)..], word3);
 		bytes[guidVersionByteIndex] = (Byte)((bytes[guidVersionByteIndex] & 0b_0000_1111) | (guidVersion << 4));
 		bytes[guidVariantByteIndex] = (Byte)((bytes[guidVariantByteIndex] & 0b_0011_1111) | (guidVariant << 6));
 		return new Guid(bytes);
 	}
+
+	private static UInt32 ReadWord(ReadOnlySpan<Byte> bytes, Int32 index) =>
+		BinaryPrimitives.ReadUInt32LittleEndian(bytes[(index * wordSize)..]);
 }
