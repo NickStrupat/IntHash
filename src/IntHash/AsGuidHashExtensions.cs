@@ -7,8 +7,8 @@ namespace NickStrupat;
 /// Encodes 32/64-bit integers as RFC 9562 version 8 (custom) GUIDs, and decodes them back.
 /// </summary>
 /// <remarks>
-/// The GUID holds the hashed integer plus hashes of neighbouring values as check data, so <c>TryFromGuidHash</c>
-/// rejects GUIDs that were not produced by the matching <c>AsGuidHash</c> overload.
+/// The GUID holds the hashed integer plus check data chained from it, so <c>TryFromGuidHash</c> rejects GUIDs that
+/// were not produced by the matching <c>AsGuidHash</c> overload.
 /// </remarks>
 public static class AsGuidHashExtensions
 {
@@ -24,12 +24,18 @@ public static class AsGuidHashExtensions
 	/// <returns>A GUID that <see cref="TryFromGuidHash(Guid, out UInt32)"/> decodes back to <paramref name="x"/></returns>
 	public static Guid AsGuidHash(this UInt32 x)
 	{
+		// Each check word mixes in x as well as the previous word, so GUIDs of nearby values share no words. The
+		// previous word is hashed first so a zero payload doesn't make every check word equal H(x) == 0.
+		var payload = IntHash.Hash(x);
+		var check1 = IntHash.Hash(x + IntHash.Hash(payload));
+		var check2 = IntHash.Hash(x + IntHash.Hash(check1));
+		var check3 = IntHash.Hash(x + IntHash.Hash(check2));
 		Span<UInt32> uint32s = stackalloc UInt32[]
 		{
-			IntHash.Hash(x + 3),
-			IntHash.Hash(x + 2), // overlaps the version nibble
-			IntHash.Hash(x + 1), // overlaps the variant bits
-			IntHash.Hash(x)      // payload
+			check3,
+			check2, // overlaps the version nibble
+			check1, // overlaps the variant bits
+			payload
 		};
 		return ToGuidHash(MemoryMarshal.AsBytes(uint32s));
 	}
@@ -39,7 +45,8 @@ public static class AsGuidHashExtensions
 	/// <returns>A GUID that <see cref="TryFromGuidHash(Guid, out UInt64)"/> decodes back to <paramref name="x"/></returns>
 	public static Guid AsGuidHash(this UInt64 x)
 	{
-		var (payload, check) = (IntHash.Hash(x), IntHash.Hash(x + 1));
+		var payload = IntHash.Hash(x);
+		var check = IntHash.Hash(x + IntHash.Hash(payload)); // see AsGuidHash(UInt32)
 		Span<UInt32> uint32s = stackalloc UInt32[]
 		{
 			(UInt32)payload,

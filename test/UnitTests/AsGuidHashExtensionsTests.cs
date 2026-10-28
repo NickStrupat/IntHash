@@ -1,4 +1,5 @@
 using NickStrupat;
+using System.Runtime.InteropServices;
 using Shouldly;
 
 namespace UnitTests;
@@ -153,10 +154,67 @@ public class AsGuidHashExtensionsTests(ITestOutputHelper toh)
 		Assert.False(Guid.Empty.TryFromGuidHash(out UInt32 _));
 	}
 
+	[Theory]
+	[InlineData(0u)]
+	[InlineData(1_000_000u)]
+	[InlineData(UInt32.MaxValue - 500)]
+	public void AsGuidHashUInt32_WhenCalledWithAdjacentValues_ReturnsGuidsWithNoSharedWords(UInt32 start)
+	{
+		for (var x = start; x != start + 1_000; x++)
+			Assert.Empty(MaskedWords(x.AsGuidHash()).Intersect(MaskedWords((x + 1).AsGuidHash())));
+	}
+
+	[Theory]
+	[InlineData(0ul)]
+	[InlineData(UInt32.MaxValue - 500ul)]
+	[InlineData(UInt64.MaxValue - 500)]
+	public void AsGuidHashUInt64_WhenCalledWithAdjacentValues_ReturnsGuidsWithNoSharedWords(UInt64 start)
+	{
+		for (var x = start; x != start + 1_000; x++)
+			Assert.Empty(MaskedWords(x.AsGuidHash()).Intersect(MaskedWords((x + 1).AsGuidHash())));
+	}
+
+	// Guards against chaining the check words without mixing in x, which makes guid(x) and guid(H(x)) share
+	// a shifted run of words
+	[Fact]
+	public void AsGuidHashUInt32_WhenCalledWithValuesWhoseChainsMeet_ReturnsGuidsSharingAtMostOneWord()
+	{
+		for (var x = 0u; x != 1_000; x++)
+		{
+			var y = x + IntHash.Hash(x);
+			Assert.True(MaskedWords(x.AsGuidHash()).Intersect(MaskedWords(y.AsGuidHash())).Count() <= 1);
+		}
+	}
+
+	// A zero payload must not collapse the check words to zero, which made both widths share the all-zero v8 GUID
+	[Fact]
+	public void AsGuidHash_WhenPayloadIsZero_ReturnsANonDegenerateGuidThatOnlyDecodesAtItsOwnWidth()
+	{
+		var allZero = Guid.Parse("00000000-0000-8000-8000-000000000000");
+		var guid32 = IntHash.HashInverse(0u).AsGuidHash();
+		var guid64 = IntHash.HashInverse(0ul).AsGuidHash();
+
+		Assert.NotEqual(allZero, guid32);
+		Assert.NotEqual(allZero, guid64);
+		Assert.False(guid32.TryFromGuidHash(out UInt64 _));
+		Assert.False(guid64.TryFromGuidHash(out UInt32 _));
+		Assert.Equal(-2, guid32.TryFromGuidHash(out Int32 decoded32) ? decoded32 : throw new());
+		Assert.Equal(IntHash.HashInverse(0ul), guid64.TryFromGuidHash(out UInt64 decoded64) ? decoded64 : throw new());
+	}
+
+	// The 32-bit words of a GUID with the version and variant bits cleared, so shifted copies of a word compare equal
+	private static UInt32[] MaskedWords(Guid guid)
+	{
+		const UInt32 versionAndVariantMask = 0x0FFF_FF3F;
+		var bytes = new Byte[16];
+		guid.TryWriteBytes(bytes);
+		return MemoryMarshal.Cast<Byte, UInt32>(bytes).ToArray().Select(w => w & versionAndVariantMask).ToArray();
+	}
+
 	// Pins the encoding format; a change here breaks decoding of GUIDs that are already stored
 	[Theory]
-	[InlineData(0u, "e33de521-5f95-83a1-87b5-f0c0e9e8dff1")]
-	[InlineData(12345u, "08f310f2-52c5-8622-99f2-c08ce7c66ad4")]
+	[InlineData(0u,"bb92a8f2-56ae-8179-a158-38bde9e8dff1")]
+	[InlineData(12345u, "69548a26-1ab8-8cf6-b15e-1749e7c66ad4")]
 	public void AsGuidHashUInt32_WhenCalled_ReturnsTheStableEncoding(UInt32 x, String expected)
 	{
 		Assert.Equal(expected, x.AsGuidHash().ToString("D"));
@@ -164,8 +222,8 @@ public class AsGuidHashExtensionsTests(ITestOutputHelper toh)
 
 	// Pins the encoding format; a change here breaks decoding of GUIDs that are already stored
 	[Theory]
-	[InlineData(0ul, "bafb8363-828b-8554-8c37-a4f58a6b244b")]
-	[InlineData(12_345_678_901_234_567_890ul, "40947a23-7579-8ec4-9716-40a5a503cd23")]
+	[InlineData(0ul, "bafb8363-8e9c-80b5-9cc6-31b28a6b244b")]
+	[InlineData(12_345_678_901_234_567_890ul, "40947a23-f850-8e7c-af8b-7f77a503cd23")]
 	public void AsGuidHashUInt64_WhenCalled_ReturnsTheStableEncoding(UInt64 x, String expected)
 	{
 		Assert.Equal(expected, x.AsGuidHash().ToString("D"));
