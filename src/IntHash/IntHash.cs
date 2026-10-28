@@ -48,7 +48,7 @@ public static class IntHash
 	/// <summary>The inverse of <see cref="Hash(Int32)"/>.</summary>
 	/// <param name="x">The integer to hash</param>
 	/// <returns>The hashed integer</returns>
-	public static Int32 HashInverse(Int32 x) => (Int32)Hash((UInt32)x);
+	public static Int32 HashInverse(Int32 x) => (Int32)HashInverse((UInt32)x);
 	
 	/// <summary>The inverse of <see cref="HashInverse(UInt64)"/>.</summary>
 	/// <param name="x">The integer to hash</param>
